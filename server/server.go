@@ -160,6 +160,17 @@ func (srv *Server) Shutdown(ctx context.Context) error {
 	return srv.http.Shutdown(ctx)
 }
 
+// Close immediately closes all active net.Listeners for the HTTP, HTTP health and SSH servers.
+func (srv *Server) Close() error {
+	herr := srv.http.server.Close()
+	hherr := srv.http.health.Close()
+	serr := srv.ssh.server.Close()
+	if herr != nil || hherr != nil || serr != nil {
+		return fmt.Errorf("one or more servers had an error closing: %s %s %s", herr, hherr, serr)
+	}
+	return nil
+}
+
 func (srv *Server) init(cfg *Config) {
 	if cfg.DB == nil {
 		dp := filepath.Join(cfg.DataDir, "db")
